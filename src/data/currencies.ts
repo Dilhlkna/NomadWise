@@ -4,6 +4,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   KZT: {
     code: 'KZT',
     nameKz: 'Қазақстан теңгесі',
+    nameRu: 'Казахстанский тенге',
     nameEn: 'Kazakhstani Tenge',
     symbol: '₸',
     flag: '🇰🇿',
@@ -14,6 +15,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   USD: {
     code: 'USD',
     nameKz: 'АҚШ доллары',
+    nameRu: 'Доллар США',
     nameEn: 'US Dollar',
     symbol: '$',
     flag: '🇺🇸',
@@ -24,6 +26,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   EUR: {
     code: 'EUR',
     nameKz: 'Еуро',
+    nameRu: 'Евро',
     nameEn: 'Euro',
     symbol: '€',
     flag: '🇪🇺',
@@ -34,6 +37,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   GBP: {
     code: 'GBP',
     nameKz: 'Британ фунт стерлингі',
+    nameRu: 'Британский фунт',
     nameEn: 'British Pound',
     symbol: '£',
     flag: '🇬🇧',
@@ -44,6 +48,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   RUB: {
     code: 'RUB',
     nameKz: 'Ресей рублі',
+    nameRu: 'Российский рубль',
     nameEn: 'Russian Ruble',
     symbol: '₽',
     flag: '🇷🇺',
@@ -54,6 +59,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   CNY: {
     code: 'CNY',
     nameKz: 'Қытай юаны',
+    nameRu: 'Китайский юань',
     nameEn: 'Chinese Yuan',
     symbol: '¥',
     flag: '🇨🇳',
@@ -64,6 +70,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   AED: {
     code: 'AED',
     nameKz: 'БАӘ дирхамы',
+    nameRu: 'Дирхам ОАЭ',
     nameEn: 'UAE Dirham',
     symbol: 'د.إ',
     flag: '🇦🇪',
@@ -74,6 +81,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   TRY: {
     code: 'TRY',
     nameKz: 'Түрік лирасы',
+    nameRu: 'Турецкая лира',
     nameEn: 'Turkish Lira',
     symbol: '₺',
     flag: '🇹🇷',
@@ -84,6 +92,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   JPY: {
     code: 'JPY',
     nameKz: 'Жапон иенасы',
+    nameRu: 'Японская иена',
     nameEn: 'Japanese Yen',
     symbol: '¥',
     flag: '🇯🇵',
@@ -94,6 +103,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   CHF: {
     code: 'CHF',
     nameKz: 'Швейцария франкі',
+    nameRu: 'Швейцарский франк',
     nameEn: 'Swiss Franc',
     symbol: 'Fr',
     flag: '🇨🇭',
@@ -104,6 +114,7 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
   CAD: {
     code: 'CAD',
     nameKz: 'Канада доллары',
+    nameRu: 'Канадский доллар',
     nameEn: 'Canadian Dollar',
     symbol: 'C$',
     flag: '🇨🇦',
@@ -114,4 +125,4 @@ export const CURRENCIES: Record<CurrencyCode, Currency> = {
 };
 
 export const CURRENCY_LIST = Object.values(CURRENCIES);
-export const POPULAR_CURRENCIES = CURRENCY_LIST.filter(c => c.isPopular);
+export const POPULAR_CURRENCIES = CURRENCY_LIST.filter((c) => c.isPopular);

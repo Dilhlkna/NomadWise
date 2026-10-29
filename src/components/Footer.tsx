@@ -1,11 +1,17 @@
 import React from 'react';
-import { ShieldCheck, Heart } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { ShieldCheck } from 'lucide-react';
 
 export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
   onNavigate,
 }) => {
+  const { t, language } = useApp();
+
+  const isRu = language === 'ru';
+  const isEn = language === 'en';
+
   return (
-    <footer className="bg-[#0b1f10] text-neutral-400 border-t border-[#16381e] text-xs">
+    <footer className="bg-[#0b1f10] dark:bg-[#040e06] text-neutral-400 border-t border-[#16381e] dark:border-neutral-800 text-xs transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Col */}
@@ -19,14 +25,18 @@ export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
               </span>
             </div>
             <p className="text-neutral-400 text-xs leading-relaxed">
-              Wise стиліндегі көпвалюталық виртуалды әмияндар және нақты нарықтық бағаммен айырбастау веб-қосымшасы.
+              {isRu
+                ? 'Мультивалютные виртуальные кошельки и платформа обмена валют по реальному рыночному курсу в стиле Wise.'
+                : isEn
+                ? 'Wise-inspired multi-currency virtual wallets and currency exchange platform with mid-market rates.'
+                : 'Wise стиліндегі көпвалюталық виртуалды әмияндар және нақты нарықтық бағаммен айырбастау веб-қосымшасы.'}
             </p>
           </div>
 
           {/* Nav links 1 */}
           <div>
             <h4 className="text-white font-semibold mb-3 text-xs uppercase tracking-wider">
-              Қызметтер
+              {isRu ? 'Сервисы' : isEn ? 'Services' : 'Қызметтер'}
             </h4>
             <ul className="space-y-2">
               <li>
@@ -35,7 +45,7 @@ export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
                   onClick={() => onNavigate('exchange')}
                   className="hover:text-white transition-colors"
                 >
-                  Валюта айырбастау
+                  {t.navExchange}
                 </button>
               </li>
               <li>
@@ -44,7 +54,7 @@ export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
                   onClick={() => onNavigate('rates')}
                   className="hover:text-white transition-colors"
                 >
-                  Нақты бағамдар кестесі
+                  {t.navRates}
                 </button>
               </li>
               <li>
@@ -53,7 +63,7 @@ export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
                   onClick={() => onNavigate('wallets')}
                   className="hover:text-white transition-colors"
                 >
-                  Виртуалды карталар
+                  {t.navWallets}
                 </button>
               </li>
               <li>
@@ -62,7 +72,7 @@ export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
                   onClick={() => onNavigate('transactions')}
                   className="hover:text-white transition-colors"
                 >
-                  Транзакциялар тарихы
+                  {t.navTransactions}
                 </button>
               </li>
             </ul>
@@ -71,7 +81,7 @@ export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
           {/* Academic & Backend */}
           <div>
             <h4 className="text-white font-semibold mb-3 text-xs uppercase tracking-wider">
-              Технологиялық Стек
+              {isRu ? 'Технологический Стек' : isEn ? 'Tech Stack' : 'Технологиялық Стек'}
             </h4>
             <ul className="space-y-2">
               <li>
@@ -98,27 +108,31 @@ export const Footer: React.FC<{ onNavigate: (tab: string) => void }> = ({
           {/* Academic disclaimer */}
           <div className="space-y-2">
             <h4 className="text-white font-semibold mb-3 text-xs uppercase tracking-wider">
-              Оқу Жобасы
+              {isRu ? 'Экзаменационный Проект' : isEn ? 'Examination Project' : 'Емтихандық Оқу Жобасы'}
             </h4>
             <p className="text-neutral-400 text-xs leading-relaxed">
-              Бұл қосымша виртуалды әмияндар мен оқу мақсатындағы demo қаражатты пайдаланады. Нақты банк картасы емес.
+              {isRu
+                ? 'Приложение использует виртуальные кошельки и тестовый баланс в учебных целях. Не является реальной банковской системой.'
+                : isEn
+                ? 'This app uses virtual sandbox wallets and demo balances for study and examination. Not a real bank.'
+                : 'Бұл қосымша виртуалды әмияндар мен оқу мақсатындағы demo қаражатты пайдаланады. Нақты банк картасы емес.'}
             </p>
             <div className="pt-2 flex items-center gap-1.5 text-neutral-400">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>Қауіпсіз тестілік орта</span>
+              <span>{isRu ? 'Безопасная тестовая среда' : isEn ? 'Secure Sandbox Environment' : 'Қауіпсіз тестілік орта'}</span>
             </div>
           </div>
         </div>
 
         {/* Bottom copyright & attribution */}
-        <div className="pt-8 border-t border-[#16381e] flex flex-col sm:flex-row items-center justify-between gap-4 text-neutral-500 text-[11px]">
+        <div className="pt-8 border-t border-[#16381e] dark:border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-neutral-500 text-[11px]">
           <div>
-            © 2026 NomadWise. Барлық құқықтар қорғалған.
+            © 2026 NomadWise. {isRu ? 'Все права защищены.' : isEn ? 'All rights reserved.' : 'Барлық құқықтар қорғалған.'}
           </div>
           <div className="flex items-center gap-4">
-            <span>Қазақстан, Алматы</span>
+            <span>{isRu ? 'Казахстан, Алматы' : isEn ? 'Kazakhstan, Almaty' : 'Қазақстан, Алматы'}</span>
             <span>·</span>
-            <span>Narxoz University оқу бағдарламасына арналған</span>
+            <span>Narxoz University</span>
           </div>
         </div>
       </div>

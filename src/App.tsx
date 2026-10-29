@@ -14,16 +14,21 @@ import { AddWalletModal } from './components/AddWalletModal';
 import { DemoTopUpModal } from './components/DemoTopUpModal';
 import { Footer } from './components/Footer';
 import { Wallet, CurrencyCode } from './types';
-import { ArrowLeft, Sparkles, ShieldCheck } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
-  const { activeTab, setActiveTab, user, isAuthenticated } = useApp();
+  const { activeTab, setActiveTab, t, language } = useApp();
 
   // Modals state
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [newWalletModalOpen, setNewWalletModalOpen] = useState(false);
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [selectedWalletForTopUp, setSelectedWalletForTopUp] = useState<Wallet | null>(null);
+
+  const handleOpenAuth = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
 
   // Exchange widget preset
   const [exchangePreset, setExchangePreset] = useState<{
@@ -37,7 +42,6 @@ const MainAppContent: React.FC = () => {
   };
 
   const handleOpenExchangeForWallet = (wallet: Wallet) => {
-    // If USD, pair with KZT, if KZT pair with USD
     const target: CurrencyCode = wallet.currencyCode === 'KZT' ? 'USD' : 'KZT';
     setExchangePreset({ source: wallet.currencyCode, target });
     setActiveTab('exchange');
@@ -49,10 +53,10 @@ const MainAppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50 text-neutral-900">
+    <div className="min-h-screen flex flex-col bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 transition-colors duration-200">
       {/* Top Bar Navigation */}
       <Navbar
-        onOpenAuth={() => setAuthModalOpen(true)}
+        onOpenAuth={handleOpenAuth}
         onOpenNewWallet={() => setNewWalletModalOpen(true)}
       />
 
@@ -61,7 +65,7 @@ const MainAppContent: React.FC = () => {
         {/* TAB 1: HOME */}
         {activeTab === 'home' && (
           <div>
-            <HeroSection onOpenAuth={() => setAuthModalOpen(true)} />
+            <HeroSection onOpenAuth={handleOpenAuth} />
             
             {/* Live rates teaser on homepage */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -76,11 +80,11 @@ const MainAppContent: React.FC = () => {
         {activeTab === 'exchange' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
             <div className="max-w-2xl mx-auto mb-8 text-center">
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight mb-2">
-                Валюта айырбастау
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight mb-2">
+                {t.exchangeTitle}
               </h1>
-              <p className="text-xs sm:text-sm text-neutral-600">
-                Бастапқы әмияннан қаражат шегеріліп, мақсатты әмиянға нақты нарықтық бағаммен дереу түседі.
+              <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
+                {t.exchangeSubtitle}
               </p>
             </div>
 
@@ -106,11 +110,11 @@ const MainAppContent: React.FC = () => {
         {activeTab === 'rates' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
             <div className="max-w-3xl mb-8">
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-neutral-900 tracking-tight mb-2">
-                Валюта бағамдарының мониторингі
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight mb-2">
+                {t.ratesTitle}
               </h1>
-              <p className="text-xs sm:text-sm text-neutral-600">
-                Frankfurter API және халықаралық нарықтық көздерден алынатын ресми бағамдар. Кез келген валюта жұбын тікелей айырбастауға жібере аласыз.
+              <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
+                Frankfurter API & European Central Bank (ECB) live rates feed.
               </p>
             </div>
 
@@ -128,7 +132,7 @@ const MainAppContent: React.FC = () => {
         {/* TAB 6: PROFILE */}
         {activeTab === 'profile' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-            <UserProfile />
+            <UserProfile onOpenAuth={handleOpenAuth} />
           </div>
         )}
 
@@ -143,6 +147,7 @@ const MainAppContent: React.FC = () => {
       {/* Global Modals */}
       <AuthModal
         isOpen={authModalOpen}
+        defaultMode={authModalMode}
         onClose={() => setAuthModalOpen(false)}
       />
 

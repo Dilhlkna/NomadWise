@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Wallet, CardTheme } from '../types';
 import { CURRENCIES } from '../data/currencies';
 import { formatCurrencyAmount } from '../services/currencyService';
+import { useApp } from '../context/AppContext';
 import {
   Wifi,
   Copy,
@@ -12,6 +13,7 @@ import {
   PlusCircle,
   Eye,
   EyeOff,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface VirtualCardProps {
@@ -66,14 +68,21 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
   onTopUpDemo,
   onToggleFreeze,
 }) => {
+  const { t, language } = useApp();
   const [copied, setCopied] = useState(false);
   const [showFullNumber, setShowFullNumber] = useState(false);
+  const [showCvv, setShowCvv] = useState(false);
 
   const currency = CURRENCIES[wallet.currencyCode] || {
     nameKz: wallet.currencyCode,
+    nameRu: wallet.currencyCode,
+    nameEn: wallet.currencyCode,
     symbol: wallet.currencyCode,
     flag: '🌐',
   };
+
+  const currencyName =
+    language === 'ru' ? currency.nameRu : language === 'en' ? currency.nameEn : currency.nameKz;
 
   const theme = THEME_STYLES[wallet.cardTheme] || THEME_STYLES.forest;
 
@@ -102,14 +111,14 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
         {/* Card Header */}
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2">
-            <span className="text-xl" role="img" aria-label={currency.nameKz}>
+            <span className="text-xl" role="img" aria-label={currencyName}>
               {currency.flag}
             </span>
             <div>
-              <p className="text-xs font-semibold tracking-wider uppercase opacity-90">
-                {currency.nameKz}
+              <p className="text-xs font-semibold tracking-wider uppercase opacity-90 truncate max-w-[140px]">
+                {currencyName}
               </p>
-              <p className={`text-[11px] ${theme.subtext}`}>Виртуалды әмиян</p>
+              <p className={`text-[11px] ${theme.subtext}`}>{t.cardVirtualWallet}</p>
             </div>
           </div>
 
@@ -130,20 +139,20 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
 
             {wallet.isFrozen && (
               <span className="flex items-center gap-1 text-[11px] font-medium bg-red-950/80 text-red-200 border border-red-700/50 px-2 py-0.5 rounded-full">
-                <Lock className="w-3 h-3" /> Бұғатталған
+                <Lock className="w-3 h-3" /> {t.cardFrozen}
               </span>
             )}
           </div>
 
           <div className="flex flex-col">
-            <span className={`text-[11px] ${theme.subtext}`}>Қолжетімді баланс</span>
+            <span className={`text-[11px] ${theme.subtext}`}>{t.cardAvailableBalance}</span>
             <span className="text-2xl font-bold font-mono tracking-tight tabular-nums">
               {formatCurrencyAmount(wallet.balance, wallet.currencyCode)}
             </span>
           </div>
         </div>
 
-        {/* Card Footer: Number & Expiry */}
+        {/* Card Footer: Number, CVV & Expiry */}
         <div className="relative z-10 flex items-end justify-between pt-1">
           <div>
             <div className="flex items-center gap-2">
@@ -154,7 +163,7 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
                 type="button"
                 onClick={() => setShowFullNumber(!showFullNumber)}
                 className="opacity-70 hover:opacity-100 transition-opacity p-0.5"
-                title={showFullNumber ? 'Жасыру' : 'Көрсету'}
+                title={showFullNumber ? 'Hide' : 'Show'}
               >
                 {showFullNumber ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
@@ -162,18 +171,36 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
                 type="button"
                 onClick={handleCopy}
                 className="opacity-70 hover:opacity-100 transition-opacity p-0.5"
-                title="Көшіріп алу"
+                title="Copy"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-[#9fe870]" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="text-[10px] tracking-wider uppercase opacity-80 mt-0.5">
-              {wallet.cardholderName}
-            </p>
+            
+            <div className="flex items-center gap-3 mt-0.5">
+              <p className="text-[10px] tracking-wider uppercase opacity-80">
+                {wallet.cardholderName}
+              </p>
+              {wallet.cvv && (
+                <div className="flex items-center gap-1 text-[10px] opacity-80">
+                  <span>CVV:</span>
+                  <span className="font-mono font-bold">
+                    {showCvv ? wallet.cvv : '•••'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCvv(!showCvv)}
+                    className="hover:opacity-100"
+                  >
+                    {showCvv ? <EyeOff className="w-2.5 h-2.5" /> : <Eye className="w-2.5 h-2.5" />}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="text-right">
-            <span className={`text-[9px] uppercase ${theme.subtext}`}>Мерзімі</span>
+            <span className={`text-[9px] uppercase ${theme.subtext}`}>{t.cardExpires}</span>
             <p className="font-mono text-xs font-semibold tabular-nums">
               {wallet.expiryDate}
             </p>
@@ -188,10 +215,10 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
             type="button"
             disabled={wallet.isFrozen}
             onClick={() => onExchangeClick(wallet)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white hover:bg-neutral-100 text-neutral-800 text-xs font-semibold border border-neutral-200 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-xs font-semibold border border-neutral-200 dark:border-neutral-700 shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ArrowLeftRight className="w-3.5 h-3.5 text-[#0e2a14]" />
-            Айырбастау
+            <ArrowLeftRight className="w-3.5 h-3.5 text-[#0e2a14] dark:text-[#9fe870]" />
+            {t.cardActionExchange}
           </button>
         )}
 
@@ -200,11 +227,11 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
             type="button"
             disabled={wallet.isFrozen}
             onClick={() => onTopUpDemo(wallet)}
-            className="flex items-center justify-center gap-1 py-2 px-3 rounded-xl bg-[#0e2a14]/5 hover:bg-[#0e2a14]/10 text-[#0e2a14] text-xs font-semibold border border-[#0e2a14]/15 transition-colors disabled:opacity-50"
-            title="Оқу мақсатындағы виртуалды demo қаражат"
+            className="flex items-center justify-center gap-1 py-2 px-3 rounded-xl bg-[#0e2a14]/5 dark:bg-[#9fe870]/10 hover:bg-[#0e2a14]/10 dark:hover:bg-[#9fe870]/20 text-[#0e2a14] dark:text-[#9fe870] text-xs font-semibold border border-[#0e2a14]/15 dark:border-[#9fe870]/30 transition-colors disabled:opacity-50"
+            title="Demo funds"
           >
-            <PlusCircle className="w-3.5 h-3.5 text-emerald-700" />
-            + Demo
+            <PlusCircle className="w-3.5 h-3.5 text-emerald-700 dark:text-[#9fe870]" />
+            {t.cardActionTopUp}
           </button>
         )}
 
@@ -214,10 +241,10 @@ export const VirtualCard: React.FC<VirtualCardProps> = ({
             onClick={() => onToggleFreeze(wallet.id)}
             className={`p-2 rounded-xl border text-xs transition-colors ${
               wallet.isFrozen
-                ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
-                : 'bg-neutral-50 text-neutral-600 border-neutral-200 hover:bg-neutral-100'
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-900 hover:bg-amber-100'
+                : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100'
             }`}
-            title={wallet.isFrozen ? 'Бұғаттаудан шығару' : 'Уақытша бұғаттау'}
+            title={wallet.isFrozen ? t.cardActionUnfreeze : t.cardActionFreeze}
           >
             {wallet.isFrozen ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
           </button>

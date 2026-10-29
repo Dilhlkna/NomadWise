@@ -11,9 +11,13 @@ export type CurrencyCode =
   | 'CHF'
   | 'CAD';
 
+export type Language = 'kk' | 'ru' | 'en';
+export type Theme = 'light' | 'dark';
+
 export interface Currency {
   code: CurrencyCode;
   nameKz: string;
+  nameRu: string;
   nameEn: string;
   symbol: string;
   flag: string;
@@ -38,9 +42,11 @@ export interface Wallet {
   cardholderName: string;
   virtualCardNumber: string;
   expiryDate: string;
+  cvv?: string; // 3-digit CVV for demo/exam representation
   isFrozen: boolean;
   cardTheme: CardTheme;
   createdAt: string;
+  isExternal?: boolean;
 }
 
 export type TransactionType = 'EXCHANGE' | 'DEMO_DEPOSIT' | 'TRANSFER_IN' | 'TRANSFER_OUT';
@@ -87,6 +93,8 @@ export interface User {
   preferredCurrency: CurrencyCode;
   joinedDate: string;
   isDemoUser: boolean;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
 }
 
 export interface RateSnapshot {
@@ -96,3 +104,4 @@ export interface RateSnapshot {
   isLive: boolean;
   rates: Record<CurrencyCode, number>;
 }
+

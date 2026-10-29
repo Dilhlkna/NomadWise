@@ -16,7 +16,7 @@ export const DemoTopUpModal: React.FC<DemoTopUpModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { addDemoFunds } = useApp();
+  const { addDemoFunds, t, language } = useApp();
   const [customAmount, setCustomAmount] = useState<string>('50000');
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -25,9 +25,13 @@ export const DemoTopUpModal: React.FC<DemoTopUpModalProps> = ({
   const currency = CURRENCIES[wallet.currencyCode] || {
     symbol: wallet.currencyCode,
     nameKz: wallet.currencyCode,
+    nameRu: wallet.currencyCode,
+    nameEn: wallet.currencyCode,
   };
 
-  // Preset amounts based on currency
+  const currencyName =
+    language === 'ru' ? currency.nameRu : language === 'en' ? currency.nameEn : currency.nameKz;
+
   const presets =
     wallet.currencyCode === 'KZT'
       ? [20000, 50000, 100000, 250000]
@@ -47,18 +51,18 @@ export const DemoTopUpModal: React.FC<DemoTopUpModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95">
-        <div className="flex items-center justify-between pb-4 border-b border-neutral-100 mb-5">
+      <div className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-neutral-200 dark:border-neutral-800 animate-in fade-in zoom-in-95">
+        <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800 mb-5">
           <div className="flex items-center gap-2">
-            <PlusCircle className="w-5 h-5 text-emerald-700" />
-            <h3 className="text-base font-bold text-neutral-900">
-              Виртуалды Demo балансты толықтыру
+            <PlusCircle className="w-5 h-5 text-emerald-700 dark:text-[#9fe870]" />
+            <h3 className="text-base font-bold">
+              {t.topUpTitle}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-700"
+            className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
           >
             <X className="w-5 h-5" />
           </button>
@@ -66,43 +70,40 @@ export const DemoTopUpModal: React.FC<DemoTopUpModalProps> = ({
 
         {isSuccess ? (
           <div className="py-8 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-[#9fe870] flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <p className="text-sm font-bold text-neutral-900">
-              Баланс сәтті толықтырылды!
+            <p className="text-sm font-bold">
+              {t.topUpSuccess}
             </p>
           </div>
         ) : (
           <div className="space-y-4 text-xs">
-            {/* Wallet summary */}
-            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/80 flex items-center justify-between">
+            <div className="p-4 bg-neutral-50 dark:bg-neutral-800 rounded-2xl border border-neutral-200/80 dark:border-neutral-700 flex items-center justify-between">
               <div>
-                <span className="text-[11px] text-neutral-400 block">Әмиян</span>
-                <strong className="text-neutral-800 text-sm">
-                  {currency.nameKz} ({wallet.currencyCode})
+                <span className="text-[11px] text-neutral-400 block">{t.cardVirtualWallet}</span>
+                <strong className="text-sm">
+                  {currencyName} ({wallet.currencyCode})
                 </strong>
               </div>
               <div className="text-right">
-                <span className="text-[11px] text-neutral-400 block">Ағымдағы баланс</span>
-                <strong className="font-mono text-emerald-800 text-sm tabular-nums">
+                <span className="text-[11px] text-neutral-400 block">{t.cardAvailableBalance}</span>
+                <strong className="font-mono text-emerald-800 dark:text-[#9fe870] text-sm tabular-nums">
                   {formatCurrencyAmount(wallet.balance, wallet.currencyCode)}
                 </strong>
               </div>
             </div>
 
-            {/* Educational Disclaimer */}
-            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-amber-900 text-[11px] leading-relaxed flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200/80 dark:border-amber-900 text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
               <span>
-                <strong>Оқу мақсатындағы ескерту:</strong> Бұл нақты ақша емес, жүйенің валюта айырбастау және баланс есептеуін тексеруге арналған сынақ қаражаты.
+                {t.topUpExamNotice}
               </span>
             </div>
 
-            {/* Presets */}
             <div>
-              <label className="block font-semibold text-neutral-700 mb-2">
-                Дайын соманы таңдаңыз:
+              <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+                {t.selectPresetAmount}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {presets.map((amt) => (
@@ -110,7 +111,7 @@ export const DemoTopUpModal: React.FC<DemoTopUpModalProps> = ({
                     key={amt}
                     type="button"
                     onClick={() => handleTopUp(amt)}
-                    className="py-2.5 px-3 rounded-xl border border-neutral-200 hover:border-[#0e2a14] hover:bg-[#0e2a14]/5 text-neutral-800 font-mono font-bold text-xs transition-all active:scale-95"
+                    className="py-2.5 px-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-[#0e2a14] dark:hover:border-[#9fe870] hover:bg-[#0e2a14]/5 dark:hover:bg-[#9fe870]/10 font-mono font-bold text-xs transition-all active:scale-95"
                   >
                     +{formatCurrencyAmount(amt, wallet.currencyCode)}
                   </button>
@@ -118,10 +119,9 @@ export const DemoTopUpModal: React.FC<DemoTopUpModalProps> = ({
               </div>
             </div>
 
-            {/* Custom Amount */}
             <div className="pt-2">
-              <label className="block font-semibold text-neutral-700 mb-1.5">
-                Немесе өз сомаңызды жазыңыз:
+              <label className="block font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">
+                {t.orCustomAmount}
               </label>
               <div className="flex gap-2">
                 <input
@@ -129,15 +129,15 @@ export const DemoTopUpModal: React.FC<DemoTopUpModalProps> = ({
                   min="1"
                   value={customAmount}
                   onChange={(e) => setCustomAmount(e.target.value)}
-                  placeholder="Сомасы..."
-                  className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 font-mono font-bold text-neutral-900 outline-none focus:border-[#0e2a14]"
+                  placeholder="50000"
+                  className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-transparent font-mono font-bold outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => handleTopUp(parseFloat(customAmount) || 0)}
-                  className="px-4 py-2 rounded-xl bg-[#0e2a14] text-[#9fe870] font-bold text-xs hover:bg-[#183d1e] transition-colors"
+                  className="px-4 py-2 rounded-xl bg-[#0e2a14] dark:bg-[#9fe870] text-[#9fe870] dark:text-[#0e2a14] font-bold text-xs hover:bg-[#183d1e] transition-colors"
                 >
-                  Қосу
+                  {t.btnAddFunds}
                 </button>
               </div>
             </div>

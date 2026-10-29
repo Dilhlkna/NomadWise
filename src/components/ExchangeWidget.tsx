@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { CurrencyCode, Wallet, Transaction } from '../types';
-import { CURRENCIES, CURRENCY_LIST } from '../data/currencies';
+import { CurrencyCode, Transaction } from '../types';
+import { CURRENCY_LIST } from '../data/currencies';
 import { currencyService, formatCurrencyAmount, roundToDecimals } from '../services/currencyService';
 import {
   ArrowUpDown,
@@ -10,10 +10,7 @@ import {
   Clock,
   ShieldCheck,
   ChevronDown,
-  Info,
-  Sparkles,
   Receipt,
-  FileCheck2,
 } from 'lucide-react';
 
 interface ExchangeWidgetProps {
@@ -25,16 +22,15 @@ interface ExchangeWidgetProps {
 export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
   initialSourceCurrency = 'USD',
   initialTargetCurrency = 'KZT',
-  isStandalone = false,
 }) => {
   const {
-    user,
     isAuthenticated,
     wallets,
     executeExchange,
-    ratesSnapshot,
     setActiveTab,
     createWallet,
+    t,
+    language,
   } = useApp();
 
   const [sourceCode, setSourceCode] = useState<CurrencyCode>(initialSourceCurrency);
@@ -45,7 +41,6 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
   const [lastSuccessTx, setLastSuccessTx] = useState<Transaction | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Guarantee countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
       setGuaranteeSeconds((prev) => (prev <= 1 ? 30 : prev - 1));
@@ -55,11 +50,9 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
 
   const parsedAmount = Math.max(0, parseFloat(amountStr) || 0);
 
-  // Look up user wallets for selected currencies
   const sourceWallet = wallets.find((w) => w.currencyCode === sourceCode);
   const targetWallet = wallets.find((w) => w.currencyCode === targetCode);
 
-  // Calculate live conversion preview
   const preview = currencyService.calculateExchangePreview(
     sourceCode,
     targetCode,
@@ -84,40 +77,72 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
     setErrorMessage(null);
 
     if (!isAuthenticated) {
-      setErrorMessage('Айырбастау жасау үшін алдымен жүйеге кіріңіз немесе тіркеліңіз.');
+      setErrorMessage(
+        language === 'ru'
+          ? 'Для обмена валюты, пожалуйста, войдите в систему или зарегистрируйтесь.'
+          : language === 'en'
+          ? 'Please sign in or register to execute currency exchange.'
+          : 'Айырбастау жасау үшін алдымен жүйеге кіріңіз немесе тіркеліңіз.'
+      );
       return;
     }
 
     if (parsedAmount <= 0) {
-      setErrorMessage('Айырбастау сомасы нөлден үлкен болуы тиіс.');
+      setErrorMessage(
+        language === 'ru'
+          ? 'Сумма обмена должна быть больше нуля.'
+          : language === 'en'
+          ? 'Exchange amount must be greater than zero.'
+          : 'Айырбастау сомасы нөлден үлкен болуы тиіс.'
+      );
       return;
     }
 
     if (sourceCode === targetCode) {
-      setErrorMessage('Бастапқы және мақсатты валюталар әртүрлі болуы керек.');
+      setErrorMessage(
+        language === 'ru'
+          ? 'Исходная и целевая валюты должны отличаться.'
+          : language === 'en'
+          ? 'Source and target currencies must be different.'
+          : 'Бастапқы және мақсатты валюталар әртүрлі болуы керек.'
+      );
       return;
     }
 
     if (!sourceWallet) {
-      setErrorMessage(`Сізде әлі ${sourceCode} әмияны жоқ. Алдымен әмиян жасаңыз.`);
+      setErrorMessage(
+        language === 'ru'
+          ? `У вас еще нет кошелька ${sourceCode}. Сначала создайте его.`
+          : language === 'en'
+          ? `You don't have a ${sourceCode} wallet yet. Please create it first.`
+          : `Сізде әлі ${sourceCode} әмияны жоқ. Алдымен әмиян жасаңыз.`
+      );
       return;
     }
 
     if (sourceWallet.balance < parsedAmount) {
       setErrorMessage(
-        `Баланс жеткіліксіз. Қолжетімді: ${formatCurrencyAmount(sourceWallet.balance, sourceCode)}`
+        language === 'ru'
+          ? `Недостаточно средств. Доступно: ${formatCurrencyAmount(sourceWallet.balance, sourceCode)}`
+          : language === 'en'
+          ? `Insufficient funds. Available: ${formatCurrencyAmount(sourceWallet.balance, sourceCode)}`
+          : `Баланс жеткіліксіз. Қолжетімді: ${formatCurrencyAmount(sourceWallet.balance, sourceCode)}`
       );
       return;
     }
 
     if (sourceWallet.isFrozen) {
-      setErrorMessage(`${sourceCode} әмияны бұғатталған. Операция тоқтатылды.`);
+      setErrorMessage(
+        language === 'ru'
+          ? `Кошелек ${sourceCode} заблокирован.`
+          : language === 'en'
+          ? `${sourceCode} wallet is frozen.`
+          : `${sourceCode} әмияны бұғатталған. Операция тоқтатылды.`
+      );
       return;
     }
 
-    // If user has no target wallet, offer to auto-create it or warn
     if (!targetWallet) {
-      // Auto create target wallet on the fly
       createWallet(targetCode, 'forest');
     }
 
@@ -126,10 +151,8 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
 
   const confirmAndExecute = () => {
     if (!sourceWallet) return;
-    // Refresh target wallet reference in case it was created
     const currentTarget = wallets.find((w) => w.currencyCode === targetCode);
     if (!currentTarget) {
-      // Create if needed
       const newW = createWallet(targetCode, 'forest');
       const result = executeExchange(sourceWallet.id, newW.id, parsedAmount);
       if (result.success && result.transaction) {
@@ -153,29 +176,27 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xl p-6 sm:p-8 max-w-xl mx-auto">
+    <div className="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200/80 dark:border-neutral-800 shadow-xl p-6 sm:p-8 max-w-xl mx-auto transition-colors">
       {/* Header */}
-      <div className="flex items-center justify-between pb-5 border-b border-neutral-100 mb-6">
+      <div className="flex items-center justify-between pb-5 border-b border-neutral-100 dark:border-neutral-800 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-neutral-900 tracking-tight">
-            Валюта айырбастау
+          <h2 className="text-xl font-bold text-neutral-900 dark:text-white tracking-tight">
+            {t.exchangeTitle}
           </h2>
-          <p className="text-xs text-neutral-500 mt-0.5">
-            Нақты нарықтық бағам және ашық минималды комиссия
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+            {t.exchangeSubtitle}
           </p>
         </div>
 
-        {/* Live status badge */}
-        <div className="flex items-center gap-1.5 text-xs text-neutral-600 bg-neutral-100/80 px-2.5 py-1 rounded-full">
-          <Clock className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2.5 py-1 rounded-full">
+          <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-[#9fe870]" />
           <span className="font-mono tabular-nums">{guaranteeSeconds}s</span>
-          <span className="text-[11px] text-neutral-400">кепілдендірілген</span>
+          <span className="text-[11px] text-neutral-400">{t.guaranteedSec}</span>
         </div>
       </div>
 
-      {/* Error message banner */}
       {errorMessage && (
-        <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2">
+        <div className="mb-5 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-800 dark:text-red-200 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
           <span>{errorMessage}</span>
         </div>
@@ -183,19 +204,19 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
 
       {/* Step 1: You Send */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-semibold text-neutral-600">
-          <span>Сіз жібересіз</span>
+        <div className="flex items-center justify-between text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+          <span>{t.youSend}</span>
           {sourceWallet && (
             <span className="text-neutral-500">
-              Баланс:{' '}
-              <span className="font-mono font-bold text-neutral-800 tabular-nums">
+              {t.availableBalance}:{' '}
+              <span className="font-mono font-bold text-neutral-800 dark:text-neutral-200 tabular-nums">
                 {formatCurrencyAmount(sourceWallet.balance, sourceCode)}
               </span>
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 p-3 bg-neutral-50 hover:bg-neutral-100/80 transition-colors rounded-2xl border border-neutral-200 focus-within:border-[#0e2a14] focus-within:ring-2 focus-within:ring-[#0e2a14]/10">
+        <div className="flex items-center gap-2 p-3 bg-neutral-50 dark:bg-neutral-800/60 rounded-2xl border border-neutral-200 dark:border-neutral-700">
           <input
             type="number"
             min="0"
@@ -206,10 +227,9 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
               setErrorMessage(null);
             }}
             placeholder="0.00"
-            className="w-full bg-transparent text-2xl sm:text-3xl font-bold font-mono tracking-tight text-neutral-900 outline-none tabular-nums placeholder:text-neutral-300"
+            className="w-full bg-transparent text-2xl sm:text-3xl font-bold font-mono tracking-tight text-neutral-900 dark:text-white outline-none tabular-nums placeholder:text-neutral-300"
           />
 
-          {/* Currency Dropdown Selector */}
           <div className="relative shrink-0">
             <select
               value={sourceCode}
@@ -217,10 +237,10 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
                 setSourceCode(e.target.value as CurrencyCode);
                 setErrorMessage(null);
               }}
-              className="appearance-none flex items-center gap-2 bg-white border border-neutral-300 text-neutral-900 text-sm font-bold py-2 pl-3 pr-8 rounded-xl cursor-pointer hover:border-neutral-400 focus:outline-none shadow-sm"
+              className="appearance-none flex items-center gap-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white text-sm font-bold py-2 pl-3 pr-8 rounded-xl cursor-pointer"
             >
               {CURRENCY_LIST.map((c) => (
-                <option key={c.code} value={c.code}>
+                <option key={c.code} value={c.code} className="dark:bg-neutral-900">
                   {c.flag} {c.code}
                 </option>
               ))}
@@ -229,65 +249,60 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
           </div>
         </div>
 
-        {/* Quick balance percentage presets (if user has wallet) */}
         {sourceWallet && sourceWallet.balance > 0 && (
           <div className="flex items-center gap-2 pt-1">
-            <span className="text-[11px] text-neutral-400">Тез таңдау:</span>
+            <span className="text-[11px] text-neutral-400">{t.quickSelect}</span>
             {[25, 50, 100].map((pct) => (
               <button
                 key={pct}
                 type="button"
                 onClick={() => setPresetPercentage(pct)}
-                className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors"
+                className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 transition-colors"
               >
-                {pct === 100 ? 'Барлығы' : `${pct}%`}
+                {pct === 100 ? t.all : `${pct}%`}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Wise-Style Transparent Fee & Rate Breakdown */}
-      <div className="relative py-4 pl-6 my-2 border-l-2 border-dashed border-neutral-200 ml-4 space-y-2 text-xs">
-        {/* Swap button placed nicely on divider */}
+      {/* Breakdown */}
+      <div className="relative py-4 pl-6 my-2 border-l-2 border-dashed border-neutral-200 dark:border-neutral-700 ml-4 space-y-2 text-xs">
         <button
           type="button"
           onClick={swapCurrencies}
-          className="absolute -left-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#0e2a14] text-white flex items-center justify-center shadow-md hover:bg-[#183d1e] transition-transform active:scale-90"
-          title="Валюталарды алмастыру"
+          className="absolute -left-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-[#0e2a14] dark:bg-[#9fe870] text-white dark:text-[#0e2a14] flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+          title="Swap"
         >
           <ArrowUpDown className="w-3.5 h-3.5" />
         </button>
 
-        {/* Commission info */}
-        <div className="flex items-center justify-between text-neutral-600">
+        <div className="flex items-center justify-between text-neutral-600 dark:text-neutral-400">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-            <span>Комиссия ({preview.feePercentage}%):</span>
+            <span>{t.commission} ({preview.feePercentage}%):</span>
           </div>
-          <span className="font-mono font-medium text-neutral-800 tabular-nums">
+          <span className="font-mono font-medium text-neutral-800 dark:text-neutral-200 tabular-nums">
             {formatCurrencyAmount(preview.feeAmount, sourceCode)}
           </span>
         </div>
 
-        {/* Converted net amount */}
-        <div className="flex items-center justify-between text-neutral-600">
+        <div className="flex items-center justify-between text-neutral-600 dark:text-neutral-400">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
-            <span>Айырбасталатын таза сома:</span>
+            <span>{t.netConvertedAmount}</span>
           </div>
-          <span className="font-mono font-medium text-neutral-800 tabular-nums">
+          <span className="font-mono font-medium text-neutral-800 dark:text-neutral-200 tabular-nums">
             {formatCurrencyAmount(preview.netSourceAmount, sourceCode)}
           </span>
         </div>
 
-        {/* Guaranteed Rate */}
-        <div className="flex items-center justify-between text-neutral-900 font-semibold pt-1">
+        <div className="flex items-center justify-between text-neutral-900 dark:text-white font-semibold pt-1">
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0e2a14]" />
-            <span>Нарықтық бағам:</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0e2a14] dark:bg-[#9fe870]" />
+            <span>{t.marketRate}</span>
           </div>
-          <span className="font-mono tabular-nums text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+          <span className="font-mono tabular-nums text-emerald-800 dark:text-[#9fe870] bg-emerald-50 dark:bg-[#9fe870]/10 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">
             1 {sourceCode} = {preview.marketRate} {targetCode}
           </span>
         </div>
@@ -295,24 +310,23 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
 
       {/* Step 2: You Receive */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-semibold text-neutral-600">
-          <span>Сіз аласыз (есептелген)</span>
+        <div className="flex items-center justify-between text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+          <span>{t.youReceive}</span>
           {targetWallet && (
             <span className="text-neutral-500">
-              Баланс:{' '}
-              <span className="font-mono font-bold text-neutral-800 tabular-nums">
+              {t.availableBalance}:{' '}
+              <span className="font-mono font-bold text-neutral-800 dark:text-neutral-200 tabular-nums">
                 {formatCurrencyAmount(targetWallet.balance, targetCode)}
               </span>
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-200">
-          <div className="w-full text-2xl sm:text-3xl font-bold font-mono tracking-tight text-emerald-950 tabular-nums py-0.5">
+        <div className="flex items-center gap-2 p-3 bg-neutral-50 dark:bg-neutral-800/60 rounded-2xl border border-neutral-200 dark:border-neutral-700">
+          <div className="w-full text-2xl sm:text-3xl font-bold font-mono tracking-tight text-emerald-950 dark:text-[#9fe870] tabular-nums py-0.5">
             {formatCurrencyAmount(preview.targetAmount, targetCode, false)}
           </div>
 
-          {/* Target Currency Selector */}
           <div className="relative shrink-0">
             <select
               value={targetCode}
@@ -320,10 +334,10 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
                 setTargetCode(e.target.value as CurrencyCode);
                 setErrorMessage(null);
               }}
-              className="appearance-none flex items-center gap-2 bg-white border border-neutral-300 text-neutral-900 text-sm font-bold py-2 pl-3 pr-8 rounded-xl cursor-pointer hover:border-neutral-400 focus:outline-none shadow-sm"
+              className="appearance-none flex items-center gap-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white text-sm font-bold py-2 pl-3 pr-8 rounded-xl cursor-pointer"
             >
               {CURRENCY_LIST.map((c) => (
-                <option key={c.code} value={c.code}>
+                <option key={c.code} value={c.code} className="dark:bg-neutral-900">
                   {c.flag} {c.code}
                 </option>
               ))}
@@ -338,67 +352,64 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
         <button
           type="button"
           onClick={handleExchangeSubmit}
-          className="w-full py-4 px-6 rounded-2xl bg-[#0e2a14] hover:bg-[#183d1e] text-[#9fe870] font-bold text-base shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2"
+          className="w-full py-4 px-6 rounded-2xl bg-[#0e2a14] hover:bg-[#183d1e] dark:bg-[#9fe870] dark:hover:bg-[#b0f385] text-[#9fe870] dark:text-[#0e2a14] font-bold text-base shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2"
         >
-          <span>Валютаны қазір айырбастау</span>
+          <span>{t.btnExchangeNow}</span>
         </button>
 
-        <div className="flex items-center justify-center gap-4 mt-3 text-[11px] text-neutral-500">
+        <div className="flex items-center justify-center gap-4 mt-3 text-[11px] text-neutral-500 dark:text-neutral-400">
           <span className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            256-бит шифрланған
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-[#9fe870]" />
+            {t.securityEncrypted}
           </span>
           <span>·</span>
-          <span>Дерекқор транзакциясымен қорғалған</span>
+          <span>{t.securityAcid}</span>
         </div>
       </div>
 
       {/* Confirmation Modal */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100 mb-5">
-              <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-[#0e2a14]" />
-                Операцияны растау
+          <div className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-neutral-200 dark:border-neutral-800 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800 mb-5">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-[#0e2a14] dark:text-[#9fe870]" />
+                {t.modalConfirmTitle}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsConfirmModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 text-lg leading-none"
+                className="text-neutral-400 hover:text-neutral-700"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3.5 text-sm mb-6">
-              <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-500">Шығарылатын сома:</span>
+            <div className="space-y-3 text-sm mb-6">
+              <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-neutral-500">{t.modalDeduct}</span>
                   <span className="font-mono font-bold text-red-600 tabular-nums">
                     -{formatCurrencyAmount(parsedAmount, sourceCode)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-neutral-500">Комиссия (0.45%):</span>
-                  <span className="font-mono text-neutral-700 tabular-nums">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-neutral-500">{t.commission} (0.45%):</span>
+                  <span className="font-mono tabular-nums">
                     {formatCurrencyAmount(preview.feeAmount, sourceCode)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-neutral-200">
-                  <span className="text-neutral-900 font-semibold">Есептелетін сома:</span>
-                  <span className="font-mono font-extrabold text-emerald-700 text-base tabular-nums">
+                <div className="flex justify-between items-center pt-2 border-t border-neutral-200 dark:border-neutral-700 text-xs">
+                  <span className="font-semibold">{t.modalCredit}</span>
+                  <span className="font-mono font-extrabold text-emerald-700 dark:text-[#9fe870] text-base tabular-nums">
                     +{formatCurrencyAmount(preview.targetAmount, targetCode)}
                   </span>
                 </div>
               </div>
 
-              <div className="text-xs text-neutral-600 space-y-1 px-1">
+              <div className="text-xs text-neutral-600 dark:text-neutral-400">
                 <p>
-                  <strong>Қолданылған бағам:</strong> 1 {sourceCode} = {preview.marketRate} {targetCode}
-                </p>
-                <p className="text-neutral-500">
-                  Операция толықтай қауіпсіз және екі әмиянның балансы дереу жаңартылады.
+                  <strong>{t.modalAppliedRate}</strong> 1 {sourceCode} = {preview.marketRate} {targetCode}
                 </p>
               </div>
             </div>
@@ -407,65 +418,49 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
               <button
                 type="button"
                 onClick={() => setIsConfirmModalOpen(false)}
-                className="flex-1 py-3 px-4 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50 transition-colors"
+                className="flex-1 py-3 px-4 rounded-xl border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 font-semibold text-xs"
               >
-                Бас тарту
+                {t.modalCancel}
               </button>
               <button
                 type="button"
                 onClick={confirmAndExecute}
-                className="flex-1 py-3 px-4 rounded-xl bg-[#0e2a14] hover:bg-[#183d1e] text-[#9fe870] font-bold transition-all shadow-md active:scale-95"
+                className="flex-1 py-3 px-4 rounded-xl bg-[#0e2a14] hover:bg-[#183d1e] dark:bg-[#9fe870] dark:hover:bg-[#b0f385] text-[#9fe870] dark:text-[#0e2a14] font-bold text-xs shadow-md"
               >
-                Растау және аудару
+                {t.modalConfirmBtn}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Success Receipt Slide-over / Modal */}
+      {/* Success Modal */}
       {lastSuccessTx && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-neutral-200 text-center animate-in fade-in zoom-in-95">
-            <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-neutral-200 dark:border-neutral-800 text-center animate-in fade-in zoom-in-95">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-8 h-8" />
             </div>
 
-            <h3 className="text-xl font-extrabold text-neutral-900 mb-1">
-              Айырбастау сәтті аяқталды!
+            <h3 className="text-xl font-extrabold mb-1">
+              {t.txSuccessTitle}
             </h3>
-            <p className="text-xs text-neutral-500 mb-5">
-              Транзакция ID: <span className="font-mono text-neutral-700">{lastSuccessTx.referenceCode}</span>
+            <p className="text-xs text-neutral-500 mb-5 font-mono">
+              ID: {lastSuccessTx.referenceCode}
             </p>
 
-            <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 text-left text-xs space-y-2 mb-6">
+            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-left text-xs space-y-2 mb-6">
               <div className="flex justify-between">
-                <span className="text-neutral-500">Шығарылды:</span>
-                <span className="font-mono font-bold text-neutral-900 tabular-nums">
+                <span className="text-neutral-500">{t.thDeducted}:</span>
+                <span className="font-mono font-bold tabular-nums">
                   {formatCurrencyAmount(lastSuccessTx.sourceAmount, lastSuccessTx.sourceCurrency)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-500">Қолма-қол түсті:</span>
-                <span className="font-mono font-bold text-emerald-700 tabular-nums">
+                <span className="text-neutral-500">{t.thCredited}:</span>
+                <span className="font-mono font-bold text-emerald-700 dark:text-[#9fe870] tabular-nums">
                   {formatCurrencyAmount(lastSuccessTx.targetAmount, lastSuccessTx.targetCurrency)}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Бағам:</span>
-                <span className="font-mono tabular-nums">
-                  1 {lastSuccessTx.sourceCurrency} = {lastSuccessTx.exchangeRate} {lastSuccessTx.targetCurrency}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">Комиссия:</span>
-                <span className="font-mono tabular-nums">
-                  {formatCurrencyAmount(lastSuccessTx.feeAmount, lastSuccessTx.sourceCurrency)}
-                </span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-neutral-200 text-[11px] text-neutral-500">
-                <span>Уақыты:</span>
-                <span>{new Date(lastSuccessTx.createdAt).toLocaleString('kk-KZ')}</span>
               </div>
             </div>
 
@@ -476,9 +471,9 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
                   setLastSuccessTx(null);
                   setActiveTab('transactions');
                 }}
-                className="flex-1 py-3 px-4 rounded-xl border border-neutral-300 text-neutral-700 text-xs font-semibold hover:bg-neutral-50 transition-colors"
+                className="flex-1 py-3 px-4 rounded-xl border border-neutral-300 dark:border-neutral-700 text-xs font-semibold"
               >
-                Тарихты көру
+                {t.viewHistory}
               </button>
               <button
                 type="button"
@@ -486,9 +481,9 @@ export const ExchangeWidget: React.FC<ExchangeWidgetProps> = ({
                   setLastSuccessTx(null);
                   setActiveTab('wallets');
                 }}
-                className="flex-1 py-3 px-4 rounded-xl bg-[#0e2a14] text-[#9fe870] text-xs font-bold hover:bg-[#183d1e] transition-colors"
+                className="flex-1 py-3 px-4 rounded-xl bg-[#0e2a14] text-[#9fe870] dark:bg-[#9fe870] dark:text-[#0e2a14] text-xs font-bold"
               >
-                Әмияндарға өту
+                {t.goToWallets}
               </button>
             </div>
           </div>
